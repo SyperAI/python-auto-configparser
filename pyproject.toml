@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Auto Configparser"
+version = "1.0.0"
+dependencies = [
+    'importlib-metadata; python_version>="3.9"',
+]
