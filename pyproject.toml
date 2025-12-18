@@ -7,4 +7,5 @@ name = "auto-configparser"
 version = "1.0.0"
 dependencies = [
     'importlib-metadata; python_version>="3.9"',
+    'pydantic~=2.12.5'
 ]
