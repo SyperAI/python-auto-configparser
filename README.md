@@ -2,6 +2,9 @@
 A simple library created to simplify working with configparse in OOP format. This library also supports
 automatic creation of a configuration file if it is missing or creation of new fields if they are added.
 
+## How to install?
+`pip install -U git+https://github.com/SyperAI/python-auto-configparser.git`
+
 ## How to use?
 1. Create section classes which depends on pydantic `BaseModel`:
 ```python
