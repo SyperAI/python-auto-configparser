@@ -2,7 +2,7 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Any, OrderedDict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 def _flatten(d: Dict[str, Any], parent: list[str] = None) -> Dict:
@@ -87,7 +87,7 @@ class AutoConfig(BaseModel):
     Attributes:
         allow_missing: If True config will be not checked for missing fields. Default: False
     """
-    allow_missing: bool = False
+    allow_missing: bool = Field(False, exclude=True)
 
     def load(self, config_file: str = "config.ini"):
         """
