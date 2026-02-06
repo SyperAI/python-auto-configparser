@@ -1,3 +1,4 @@
+import warnings
 from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, Any, OrderedDict
@@ -30,15 +31,41 @@ def _get_defaults(model) -> Dict:
     return _flatten(model.model_dump())
 
 
-def _parse_config_file(model, config_file: str, allow_missing: bool = False) -> Dict:
+def _compare_config(default_conf: dict[str, dict], conf: dict[str, dict]):
+    for default_section in default_conf.keys():
+        if default_section not in conf.keys():
+            return False
+
+        for default_option in default_conf.get(default_section).keys():
+            if default_option not in conf.get(default_section).keys():
+                return False
+
+    return True
+
+
+def _config_to_dict(c):
+    return {section: dict(c.items(section)) for section in c.sections()}
+
+
+def _parse_config_file(model, config_file: str, allow_missing: bool = False, safe_load: bool = False) -> Dict:
     config_data = {}
 
     parser = ConfigParser(dict_type=OrderedDict)
-    parser.read_dict(_get_defaults(model))
     parser.read(config_file, encoding="utf-8")
 
-    with open(config_file, "w", encoding="utf-8") as f:
-        parser.write(f)
+    # Writing config file if some sections or options was not found in current
+    config_defaults = _get_defaults(model)
+    if not _compare_config(config_defaults, _config_to_dict(parser)):
+        parser.read_dict(config_defaults)
+        parser.read(config_file, encoding="utf-8")
+
+        save_path = config_file
+        if safe_load:
+            save_path += ".default"
+            warnings.warn(f"Safe load was used, config file was created as {save_path}")
+
+        with open(save_path, "w", encoding="utf-8") as f:
+            parser.write(f)
 
     if not allow_missing:
         missing: list[str] = []
@@ -48,7 +75,6 @@ def _parse_config_file(model, config_file: str, allow_missing: bool = False) -> 
                     missing.append(f"{sect}.{key}")
         if missing:
             raise ValueError(f"Missing values for: {', '.join(missing)} fields in {config_file}")
-
 
     for section in parser.sections():
         main_section = section.split('.')[0]
@@ -86,8 +112,10 @@ class AutoConfig(BaseModel):
 
     Attributes:
         allow_missing: If True config will be not checked for missing fields. Default: False
+        safe_load: Will create .ini.default config instead of directly creating .ini if config file was not found or missing values. Default: False
     """
     allow_missing: bool = Field(False, exclude=True)
+    safe_load: bool = Field(False, exclude=True)
 
     def load(self, config_file: str = "config.ini"):
         """
@@ -97,7 +125,7 @@ class AutoConfig(BaseModel):
         :return:
         """
 
-        self.__init__(**_parse_config_file(self, config_file, self.allow_missing))
+        self.__init__(**_parse_config_file(self, config_file, self.allow_missing, self.safe_load))
         return self
 
     def save(self, config_file: str = "config.ini") -> None:
