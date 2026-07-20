@@ -137,7 +137,7 @@ class AutoConfig(BaseModel):
         """
 
         parser = ConfigParser(dict_type=OrderedDict)
-        parser.read_dict(self.model_dump())
+        parser.read_dict(_flatten(self.model_dump()))
 
         with open(config_file, "w", encoding="utf-8") as f:
             parser.write(f)
